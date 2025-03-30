@@ -50,8 +50,8 @@ body {
 }
 
 .logo {
-  width: 60px;
-  height: auto;
+  width: 100px;
+  height: 150px;
   margin-right: 20px; /* 로고와 타이틀 사이 간격 유지 */
 }
 
