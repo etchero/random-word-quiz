@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>안동 영어종결센터 Word Random Test</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 첫 화면 (입력 화면) -->
+  <div class="container" id="inputScreen">
+    <header class="header">
+      <div class="title-box">
+        <img src="logo.png" alt="Logo" class="logo">
+        <h1 class="title">안동 영어종결센터<br>Word Random Test</h1>
+      </div>
+    </header>
+    
+    <section class="inputs-container">
+      <div class="input-box eng-input">
+        <label for="englishWords">영어단어 (슬래시로 구분):</label>
+        <textarea id="englishWords" placeholder="apple/banana/cherry"></textarea>
+      </div>
+      <div class="input-box kor-input">
+        <label for="koreanWords">한국어 뜻 (슬래시로 구분):</label>
+        <textarea id="koreanWords" placeholder="사과/바나나/체리"></textarea>
+      </div>
+    </section>
+    
+    <section class="start-section">
+      <button id="startButton" class="start-btn">준비되었으면 시작!</button>
+      <input type="text" id="userName" class="name-box" placeholder="Name">
+    </section>
+  </div>
+  
+  <!-- 테스트 화면 -->
+  <section id="quizSection" class="quiz-section hidden">
+    <div class="question-container">
+      <div class="qn-timer">
+        <div id="questionNumber" class="question-number">문제 1번</div>
+        <div id="timer" class="timer">6</div>
+      </div>
+      <div id="question" class="question"></div>
+    </div>
+    <div id="choices" class="choices"></div>
+  </section>
+  
+  <!-- 결과 화면 -->
+  <section id="resultSection" class="result-section hidden">
+    <h2 id="finalMessage">수고하셨습니다</h2>
+    <div id="finalScore" class="final-score"></div>
+    <div class="button-group">
+      <button id="restartButton" class="restart-btn">처음으로 돌아가기</button>
+      <button id="retryWrongButton" class="retry-btn">선생님 지시가 있으면 다시 복습하기</button>
+    </div>
+    <div class="review-container">
+      <h3>오답 리뷰 (문제 / 선택한 답 / 정답)</h3>
+      <div id="reviewSection" class="review-section"></div>
+    </div>
+  </section>
+  
+  <script src="script.js"></script>
+</body>
+</html>
