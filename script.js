@@ -9,8 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('startButton').addEventListener('click', startTest);
   document.getElementById('restartButton').addEventListener('click', restartTest);
   document.getElementById('retryWrongButton').addEventListener('click', retryWrongQuestions);
+  document.getElementById('viewResultButton').addEventListener('click', showHistory);
+  document.getElementById('closeHistoryButton').addEventListener('click', closeHistory);
   
-  // localStorage에서 이전에 입력한 단어 불러오기 (요구사항 14)
+  // localStorage에서 이전에 입력한 단어 불러오기
   loadSavedWords();
 });
 
@@ -23,6 +25,7 @@ let score = 0;               // 점수
 let timerInterval;           // 타이머 인터벌
 let timeLeft = 6;            // 남은 시간
 let wrongAnswers = [];       // 오답 저장 배열
+let testStartTime;           // 테스트 시작 시간
 
 /**
  * localStorage에서 이전에 입력한 단어 불러오기
@@ -53,7 +56,7 @@ function startTest() {
   englishWords = engText.split('/').map(word => word.trim()).filter(word => word !== "");
   koreanWords = korText.split('/').map(word => word.trim()).filter(word => word !== "");
   
-  // 입력값 localStorage에 저장 (요구사항 14)
+  // 입력값 localStorage에 저장
   localStorage.setItem('wordTestEnglishWords', engText);
   localStorage.setItem('wordTestKoreanWords', korText);
   
@@ -68,6 +71,9 @@ function startTest() {
   score = 0;
   wrongAnswers = [];
   
+  // 테스트 시작 시간 기록
+  testStartTime = new Date();
+  
   // 문제 생성
   generateQuestions();
   
@@ -75,13 +81,14 @@ function startTest() {
   document.getElementById('inputScreen').classList.add('hidden');
   document.getElementById('quizSection').classList.remove('hidden');
   document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('historySection').classList.add('hidden');
   
   // 첫 문제 표시
   nextQuestion();
 }
 
 /**
- * 문제 생성 함수 (요구사항 6, 7, 8)
+ * 문제 생성 함수
  */
 function generateQuestions() {
   const totalWords = englishWords.length;
@@ -91,11 +98,9 @@ function generateQuestions() {
   
   // 50개 미만이면 모든 단어 사용, 그렇지 않으면 25개씩 랜덤 선택
   if (totalWords < 50) {
-    // 50개 미만: 모든 단어를 양방향으로 출제
     engToKorIndices = [...indices];
     korToEngIndices = [...indices];
   } else {
-    // 50개 이상: 영→한 25개, 한→영 25개 랜덤 선택 (중복 없이)
     engToKorIndices = getRandomUniqueIndices(indices, 25);
     const remaining = indices.filter(i => !engToKorIndices.includes(i));
     
@@ -155,13 +160,10 @@ function shuffleArray(array) {
   let currentIndex = array.length;
   let temporaryValue, randomIndex;
   
-  // 요소가 남아있는 동안
   while (currentIndex !== 0) {
-    // 남은 요소 중 하나를 무작위로 선택
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
     
-    // 현재 요소와 선택된 요소를 교환
     temporaryValue = array[currentIndex];
     array[currentIndex] = array[randomIndex];
     array[randomIndex] = temporaryValue;
@@ -274,7 +276,7 @@ function checkAnswer(selected) {
   if (selected === currentQuestion.answer) {
     score++;
   } else {
-    // 오답 정보 저장 (요구사항 12)
+    // 오답 정보 저장
     wrongAnswers.push({
       type: currentQuestion.type,
       question: currentQuestion.question,
@@ -294,6 +296,9 @@ function checkAnswer(selected) {
 function endTest() {
   clearInterval(timerInterval);
   
+  // 테스트 종료 시간 기록
+  const testEndTime = new Date();
+  
   // 화면 전환
   document.getElementById('quizSection').classList.add('hidden');
   document.getElementById('resultSection').classList.remove('hidden');
@@ -302,7 +307,7 @@ function endTest() {
   let percentage = Math.round((score / questions.length) * 100);
   let message = "";
   
-  // 점수대별 피드백 메시지 (요구사항 15)
+  // 점수대별 피드백 메시지
   if (percentage === 100) {
     message = "대박! 아주 훌륭해요!";
   } else if (percentage >= 90 && percentage <= 98) {
@@ -320,27 +325,63 @@ function endTest() {
     `<p>${message}</p>` +
     `<p>한번 더 치세요!</p>`;
   
-  // 테스트 결과 저장 (요구사항 11)
-  saveTestResult(percentage);
+  // 사용자 이름 가져오기
+  const userName = document.getElementById('userName').value || "Guest";
   
-  // 오답 리뷰 표시 (요구사항 12)
+  // 날짜 및 시간 포맷팅
+  const formattedDate = formatDate(testEndTime);
+  const formattedTime = formatTime(testEndTime);
+  
+  // 결과 상세 정보 표시
+  document.getElementById('resultDetails').innerHTML = 
+    `<p><strong>이름:</strong> ${userName}</p>` +
+    `<p><strong>점수:</strong> ${percentage}%</p>` +
+    `<p><strong>테스트 실시 날짜:</strong> ${formattedDate}</p>` +
+    `<p><strong>테스트 실시 시각:</strong> ${formattedTime}</p>`;
+  
+  // 테스트 결과 저장
+  saveTestResult(percentage, formattedDate, formattedTime, testEndTime.getTime());
+  
+  // 오답 리뷰 표시
   showReview();
+}
+
+/**
+ * 날짜 포맷팅 함수 (YYYY-MM-DD)
+ */
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 시간 포맷팅 함수 (HH:MM:SS)
+ */
+function formatTime(date) {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${hours}:${minutes}:${seconds}`;
 }
 
 /**
  * 테스트 결과 저장 함수
  */
-function saveTestResult(percentage) {
+function saveTestResult(percentage, date, time, timestamp) {
   const userName = document.getElementById('userName').value || "Guest";
-  const now = new Date();
   
   const result = {
+    id: timestamp,
     name: userName,
     percentage: percentage,
     correct: score,
     total: questions.length,
-    date: now.toLocaleDateString(),
-    time: now.toLocaleTimeString()
+    date: date,
+    time: time
   };
   
   // localStorage에서 기존 결과 불러오기
@@ -382,13 +423,62 @@ function showReview() {
 }
 
 /**
- * 처음으로 돌아가기 함수 (요구사항 14)
+ * 결과 이력 표시 함수
+ */
+function showHistory() {
+  // 이력 섹션 표시
+  document.getElementById('inputScreen').classList.add('hidden');
+  document.getElementById('quizSection').classList.add('hidden');
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('historySection').classList.remove('hidden');
+  
+  // localStorage에서 결과 이력 불러오기
+  const results = JSON.parse(localStorage.getItem('wordTestResults')) || [];
+  const historyList = document.getElementById('historyList');
+  
+  // 이력 목록 초기화
+  historyList.innerHTML = "";
+  
+  // 이력이 없으면 메시지 표시
+  if (results.length === 0) {
+    historyList.innerHTML = "<p class='no-history'>아직 테스트 결과 이력이 없습니다.</p>";
+    return;
+  }
+  
+  // 시간 순 정렬 (최신순)
+  results.sort((a, b) => b.id - a.id);
+  
+  // 각 이력 표시
+  results.forEach(result => {
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+    
+    historyItem.innerHTML = 
+      `<h3>${result.name}의 테스트 결과</h3>` +
+      `<p class="history-score">점수: ${result.percentage}% (${result.correct}/${result.total})</p>` +
+      `<p class="history-date">테스트 일시: ${result.date} ${result.time}</p>`;
+    
+    historyList.appendChild(historyItem);
+  });
+}
+
+/**
+ * 이력 화면 닫기 함수
+ */
+function closeHistory() {
+  document.getElementById('historySection').classList.add('hidden');
+  document.getElementById('inputScreen').classList.remove('hidden');
+}
+
+/**
+ * 처음으로 돌아가기 함수
  */
 function restartTest() {
   // 화면 전환
   document.getElementById('inputScreen').classList.remove('hidden');
   document.getElementById('quizSection').classList.add('hidden');
   document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('historySection').classList.add('hidden');
   
   // 상태 초기화 (입력값은 유지)
   currentQuestionIndex = 0;
@@ -397,7 +487,7 @@ function restartTest() {
 }
 
 /**
- * 오답 다시 풀기 함수 (요구사항 13)
+ * 오답 다시 풀기 함수
  */
 function retryWrongQuestions() {
   // 오답이 없으면 알림
@@ -417,6 +507,9 @@ function retryWrongQuestions() {
   currentQuestionIndex = 0;
   score = 0;
   wrongAnswers = [];
+  
+  // 테스트 시작 시간 갱신
+  testStartTime = new Date();
   
   // 화면 전환
   document.getElementById('resultSection').classList.add('hidden');
